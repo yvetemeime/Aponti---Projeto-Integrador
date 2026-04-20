@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @page { size: a4 portrait; margin: 1cm; }
+        body { font-family: Helvetica, sans-serif; color: #333; }
+        .header { text-align: center; border-bottom: 2px solid #0d6efd; padding-bottom: 20px; }
+        .logo { font-size: 24px; font-weight: bold; color: #0d6efd; }
+        .title { font-size: 18px; margin-top: 5px; text-transform: uppercase; }
+        .summary { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 10px; }
+        .summary-item { display: inline-block; width: 45%; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background-color: #0d6efd; color: white; font-size: 11px; padding: 10px; text-align: left; }
+        td { border-bottom: 1px solid #ddd; padding: 8px; font-size: 10px; vertical-align: top; }
+        .status-ativo { color: #198754; font-weight: bold; }
+        .status-inativo { color: #dc3545; font-weight: bold; }
+        .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 9px; color: #777; }
+        .matriz-data { font-style: normal; color: #444; margin-top: 5px; display: block; line-height: 1.4; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">HSBS Intelligence</div>
+        <div class="title">Relatório Executivo de Auditoria</div>
+        <p style="font-size: 10px;">Gerado em: {% now "d/m/Y H:i" %} por {{ usuario_gerador|upper }}</p>
+    </div>
+
+    <div class="summary">
+        <div class="summary-item"><strong>Total de Registros:</strong> {{ registros.count }}</div>
+        <div class="summary-item"><strong>Status do Sistema:</strong> Operacional / BI</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 15%;">DATA</th>
+                <th style="width: 20%;">AUDITOR</th>
+                <th style="width: 45%;">DETALHAMENTO DA MATRIZ</th>
+                <th style="width: 20%;">CONFORMIDADE</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in registros %}
+            <tr>
+                <td>{{ r.data_criacao|date:"d/m/Y" }}</td>
+                <td>{{ r.usuario.username|upper }}</td>
+                <td>
+                    <strong>{{ r.titulo }}</strong><br>
+                    <span class="matriz-data">
+                        {# Aqui exibimos o texto já limpo pelo Python no views.py #}
+                        {{ r.descricao_limpa|linebreaksbr }}
+                    </span>
+                </td>
+                <td>
+                    {% if r.ativo %}
+                        <span class="status-ativo">CONFORME</span>
+                    {% else %}
+                        <span class="status-inativo">PENDENTE</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center;">Nenhum registro disponível.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Relatório HSBS Intelligence - Página <pdf:pagenumber> de <pdf:pagecount>
+    </div>
+</body>
+</html>

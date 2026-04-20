@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* Estilização para Bordas Móveis e Células Inteligentes */
+    .matriz-container {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .matriz-table th {
+        position: relative;
+        min-width: 150px;
+        background-color: #212529 !important;
+        color: white;
+        resize: horizontal; 
+        overflow: auto;
+    }
+
+    .matriz-cell {
+        min-height: 40px;
+        height: auto;
+        resize: none; 
+        border: 1px solid #dee2e6;
+        transition: all 0.2s;
+    }
+
+    .matriz-cell:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+    }
+
+    .btn-remove-col {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        padding: 0px 5px;
+        font-size: 10px;
+        border-radius: 3px;
+        opacity: 0.7;
+    }
+
+    .handle-row {
+        width: 40px;
+        text-align: center;
+        background-color: #f8f9fa;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="matriz-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold text-primary"><i class="fas fa-th me-2"></i>Editor de Matriz Dinâmica HSBS</h4>
+            <div class="badge bg-info text-dark small">Dica: Arraste a borda das colunas para ajustar a largura</div>
+        </div>
+
+        <form method="POST" id="formAuditoria">
+            {% csrf_token %}
+            
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <label class="fw-bold small text-muted text-uppercase">Título da Auditoria</label>
+                    <input type="text" name="titulo" class="form-control rounded-pill border-primary shadow-sm" placeholder="Ex: Auditoria Semestral de Segurança" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="fw-bold small text-muted text-uppercase">Status de Conformidade</label>
+                    <select name="ativo" class="form-select rounded-pill border-primary shadow-sm">
+                        <option value="True">CONFORME (ATIVO)</option>
+                        <option value="False">NÃO CONFORME (INATIVO)</option>
+                    </select>
+                </div>
+            </div>
+
+            <input type="hidden" name="descricao" id="id_descricao_final">
+
+            <div class="table-responsive">
+                <table class="table table-bordered matriz-table" id="tabelaPrincipal">
+                    <thead>
+                        <tr id="headerRow">
+                            <th class="handle-row" style="resize: none; min-width: 50px;">#</th>
+                            <th>Diagnóstico Inicial
+                                <button type="button" class="btn btn-danger btn-remove-col" onclick="removerColuna(1)">X</button>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyMatriz">
+                        <tr>
+                            <td class="handle-row">
+                                <button type="button" class="btn btn-outline-danger btn-sm border-0" onclick="removerLinha(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                            <td>
+                                <textarea class="form-control matriz-cell" placeholder="Digite aqui..."></textarea>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex gap-2 mb-4">
+                <button type="button" class="btn btn-dark btn-sm fw-bold rounded-pill px-3" onclick="adicionarLinha()">
+                    <i class="fas fa-plus me-1"></i> ADICIONAR LINHA
+                </button>
+                <button type="button" class="btn btn-dark btn-sm fw-bold rounded-pill px-3" onclick="adicionarColuna()">
+                    <i class="fas fa-plus me-1"></i> ADICIONAR COLUNA
+                </button>
+            </div>
+
+            <hr>
+
+            <div class="text-end">
+                <a href="{% url 'registro_list' %}" class="btn btn-light fw-bold px-4 rounded-pill me-2">CANCELAR</a>
+                <button type="submit" class="btn btn-primary px-5 fw-bold shadow rounded-pill">
+                    <i class="fas fa-save me-2"></i>SALVAR AUDITORIA NO BANCO
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+<script>
+    // 1. Ajuste Automático de Altura (Células inteligentes)
+    document.addEventListener('input', function (e) {
+        if (e.target.classList.contains('matriz-cell')) {
+            e.target.style.height = 'auto';
+            e.target.style.height = (e.target.scrollHeight) + 'px';
+        }
+    });
+
+    // 2. Adicionar Nova Linha
+    function adicionarLinha() {
+        const tbody = document.getElementById('bodyMatriz');
+        const totalColunas = document.getElementById('headerRow').cells.length;
+        
+        let novaLinha = `<tr><td class="handle-row">
+            <button type="button" class="btn btn-outline-danger btn-sm border-0" onclick="removerLinha(this)">
+                <i class="fas fa-trash"></i>
+            </button></td>`;
+        
+        for (let i = 1; i < totalColunas; i++) {
+            novaLinha += `<td><textarea class="form-control matriz-cell" placeholder="Novo diagnóstico..."></textarea></td>`;
+        }
+        novaLinha += `</tr>`;
+        tbody.insertAdjacentHTML('beforeend', novaLinha);
+    }
+
+    // 3. Adicionar Nova Coluna
+    function adicionarColuna() {
+        const headerRow = document.getElementById('headerRow');
+        const bodyRows = document.querySelectorAll('#bodyMatriz tr');
+        const colIndex = headerRow.cells.length;
+
+        const th = document.createElement('th');
+        th.innerHTML = `Nova Categoria <button type="button" class="btn btn-danger btn-remove-col" onclick="removerColuna(${colIndex})">X</button>`;
+        headerRow.appendChild(th);
+
+        bodyRows.forEach((row) => {
+            const td = document.createElement('td');
+            td.innerHTML = `<textarea class="form-control matriz-cell"></textarea>`;
+            row.appendChild(td);
+        });
+    }
+
+    // 4. Remover Linha
+    function removerLinha(botao) {
+        if (confirm("Deseja remover esta linha da auditoria?")) {
+            botao.closest('tr').remove();
+        }
+    }
+
+    // 5. Remover Coluna
+    function removerColuna(index) {
+        if (confirm("Confirmar exclusão desta coluna?")) {
+            const tabela = document.getElementById('tabelaPrincipal');
+            for (let i = 0; i < tabela.rows.length; i++) {
+                tabela.rows[i].deleteCell(index);
+            }
+            atualizarIndicesColunas();
+        }
+    }
+
+    function atualizarIndicesColunas() {
+        const ths = document.querySelectorAll('#headerRow th');
+        ths.forEach((th, idx) => {
+            const btn = th.querySelector('.btn-remove-col');
+            if (btn) btn.setAttribute('onclick', `removerColuna(${idx})`);
+        });
+    }
+
+    // 6. LOGICA DE SALVAMENTO: "Empacota" a matriz para o Django
+    document.getElementById('formAuditoria').onsubmit = function() {
+        let textoFinal = "";
+        const rows = document.querySelectorAll('#bodyMatriz tr');
+        
+        rows.forEach((row, rowIndex) => {
+            let rowContent = [];
+            row.querySelectorAll('.matriz-cell').forEach(cell => {
+                if(cell.value.trim() !== "") rowContent.push(cell.value.trim());
+            });
+            if(rowContent.length > 0) {
+                textoFinal += `Linha ${rowIndex + 1}: ${rowContent.join(' | ')} \n`;
+            }
+        });
+        
+        document.getElementById('id_descricao_final').value = textoFinal;
+    };
+</script>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card border-0 shadow-lg rounded-4">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <i class="fas fa-user-plus text-primary fa-3x mb-3"></i>
+                    <h3 class="fw-bold text-dark">Novo Acesso HSBS</h3>
+                    <p class="text-muted small">Configure as credenciais e o nível de acesso</p>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text" style="font-size: 0.75rem;">{{ field.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <div class="mb-4 mt-4 p-3 bg-light rounded-3 border">
+                        <label class="form-label fw-bold text-primary small">
+                            <i class="fas fa-shield-alt me-1"></i> Nível de Permissão
+                        </label>
+                        <select name="perfil_usuario" class="form-select rounded-pill border-primary shadow-sm">
+                            <option value="comum">Usuário Comum (Vê apenas os seus registros)</option>
+                            <option value="lider">Líder de Associação (Vê todos os subordinados)</option>
+                            <option value="admin">Administrador Geral (Acesso total ao sistema)</option>
+                        </select>
+                        <div class="form-text mt-2" style="font-size: 0.7rem;">
+                            * Defina com cautela. Perfis superiores têm acesso a dados sensíveis.
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm">
+                            CRIAR CONTA
+                        </button>
+                        <a href="{% url 'login' %}" class="btn btn-link text-decoration-none text-muted small">
+                            Já possui conta? Faça login
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilização para os inputs padrão do Django ficarem bonitos */
+    input[type="text"], input[type="password"], input[type="email"] {
+        display: block;
+        width: 100%;
+        padding: 0.6rem 1rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #dee2e6;
+        border-radius: 50px; /* Arredondado Arrojado */
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    input:focus {
+        border-color: #0d6efd;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13,110,253,.15);
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+            <div class="card-header bg-dark text-white text-center py-4 border-0">
+                <i class="fas fa-shield-alt fa-3x mb-3 text-primary"></i>
+                <h3 class="fw-bold mb-0">HSBS LOGIN</h3>
+                <small class="text-white-50 text-uppercase tracking-widest">Auditoria Inteligente</small>
+            </div>
+            
+            <div class="card-body p-5 bg-white">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label class="form-label text-muted small fw-bold">USUÁRIO</label>
+                        <div class="input-group border rounded-pill px-3 py-1 bg-light">
+                            <span class="input-group-text bg-transparent border-0 text-primary">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            <input type="text" name="username" class="form-control border-0 bg-transparent shadow-none" placeholder="Seu usuário" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-muted small fw-bold">SENHA</label>
+                        <div class="input-group border rounded-pill px-3 py-1 bg-light">
+                            <span class="input-group-text bg-transparent border-0 text-primary">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            <input type="password" name="password" class="form-control border-0 bg-transparent shadow-none" placeholder="••••••••" required>
+                        </div>
+                    </div>
+
+                    {% if form.errors %}
+                    <div class="alert alert-danger border-0 small py-2 text-center rounded-pill">
+                        <i class="fas fa-exclamation-circle me-2"></i>Credenciais inválidas.
+                    </div>
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill py-3 fw-bold shadow-sm mt-2 btn-hover">
+                        ENTRAR <i class="fas fa-sign-in-alt ms-2"></i>
+                    </button>
+                </form>
+            </div>
+            
+            <div class="card-footer bg-light text-center py-3 border-0">
+                <a href="{% url 'register' %}" class="text-primary fw-bold small text-decoration-none">
+                    Não tem conta? Crie uma aqui
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn-hover { transition: all 0.3s; }
+    .btn-hover:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(13, 110, 253, 0.4); }
+    .input-group:focus-within { border-color: #0d6efd !important; background: white !important; }
+</style>
+{% endblock %}

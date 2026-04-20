@@ -1,0 +1,31 @@
+def importar_planilha(request):
+    # Mudamos de 'arquivo' para 'planilha' para bater com seu HTML
+    if request.method == 'POST' and request.FILES.get('planilha'):
+        arquivo = request.FILES['planilha']
+        
+        try:
+            if arquivo.name.endswith('.csv'):
+                df = pd.read_csv(arquivo)
+            else:
+                df = pd.read_excel(arquivo)
+
+            df.dropna(how='all', inplace=True)
+            
+            contador = 0
+            for _, row in df.iterrows():
+                Registro.objects.create(
+                    usuario=request.user,
+                    titulo=row.get('Titulo', 'Sem Título'),
+                    descricao=row.get('Descricao', ''),
+                    ativo=True
+                )
+                contador += 1
+            
+            messages.success(request, f"Sucesso! {contador} registros importados para o BI.")
+            return redirect('registro_list')
+
+        except Exception as e:
+            messages.error(request, f"Erro ao processar: {e}")
+            return redirect('registro_list')
+
+    return render(request, 'importar_form.html')

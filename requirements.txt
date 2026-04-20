@@ -1,0 +1,18 @@
+# Framework Web
+Django>=5.1.0
+
+# Inteligência de Dados e Processamento de Planilhas
+pandas>=2.2.0
+openpyxl>=3.1.0
+numpy>=2.0.0
+
+# Geração de Relatórios PDF
+xhtml2pdf>=0.2.11
+reportlab>=3.6.0
+
+# Exportação de Dados (Excel/XLSX)
+tablib[xlsx]>=3.5.0
+
+# Utilitários de Sistema
+python-dateutil>=2.8.2
+six>=1.16.0

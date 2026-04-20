@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-3"><div class="card bg-primary text-white border-0 shadow-sm p-3 rounded-4"><h6>Total Registros</h6><h2>{{ total_registros }}</h2></div></div>
+    <div class="col-md-3"><div class="card bg-success text-white border-0 shadow-sm p-3 rounded-4"><h6>Em Conformidade</h6><h2>{{ ativos }}</h2></div></div>
+    <div class="col-md-3"><div class="card bg-info text-white border-0 shadow-sm p-3 rounded-4"><h6>Taxa Período</h6><h2>{{ taxa_conformidade }}%</h2></div></div>
+    <div class="col-md-3"><div class="card bg-danger text-white border-0 shadow-sm p-3 rounded-4"><h6>Pendentes</h6><h2>{{ inativos }}</h2></div></div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+    <form method="GET" class="row g-3 align-items-end">
+        {% if todos_usuarios %}
+        <div class="col-md-3">
+            <label class="small fw-bold text-muted">FILTRAR POR USUÁRIO</label>
+            <select name="usuario" class="form-select rounded-pill">
+                <option value="todos">Todos os Usuários</option>
+                {% for u in todos_usuarios %}
+                    <option value="{{ u.id }}" {% if request.GET.usuario == u.id|stringformat:"i" %}selected{% endif %}>{{ u.username|upper }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div class="col-md-3">
+            <label class="small fw-bold text-muted">DE:</label>
+            <input type="date" name="data_inicio" value="{{ request.GET.data_inicio }}" class="form-select rounded-pill">
+        </div>
+        <div class="col-md-3">
+            <label class="small fw-bold text-muted">ATÉ:</label>
+            <input type="date" name="data_fim" value="{{ request.GET.data_fim }}" class="form-select rounded-pill">
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-dark rounded-pill w-100 fw-bold"><i class="fas fa-filter me-2"></i>Filtrar</button>
+            <a href="{% url 'registro_list' %}" class="btn btn-outline-secondary rounded-pill"><i class="fas fa-undo"></i></a>
+        </div>
+    </form>
+</div>
+
+<div class="d-flex gap-2 mb-4">
+    <a href="{% url 'registro_create' %}" class="btn btn-primary rounded-pill px-4 shadow">Novo</a>
+    <button class="btn btn-outline-info rounded-pill px-4 shadow" data-bs-toggle="modal" data-bs-target="#modalImportar">Importar Planilha</button>
+    <button type="submit" form="formAcoes" formaction="{% url 'exportar_selecionados' %}" class="btn btn-outline-success rounded-pill shadow">Excel</button>
+    <button type="submit" form="formAcoes" formaction="{% url 'gerar_pdf_auditoria' %}" class="btn btn-outline-danger rounded-pill shadow">PDF</button>
+</div>
+
+<form id="formAcoes" method="POST">
+    {% csrf_token %}
+    <div class="table-responsive bg-white p-4 rounded-4 shadow-sm border">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th><input type="checkbox" id="selectAll" class="form-check-input"></th>
+                    <th>Título / Data</th>
+                    <th>Responsável</th>
+                    <th>Status</th>
+                    <th class="text-center">Ações BI</th>
+                    <th class="text-center">Gerenciar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for registro in object_list %}
+                <tr>
+                    <td><input type="checkbox" name="registros_ids" value="{{ registro.id }}" class="form-check-input"></td>
+                    <td><strong>{{ registro.titulo }}</strong><br><small class="text-muted">{{ registro.data_criacao|date:"d/m/Y" }}</small></td>
+                    <td><span class="badge bg-light text-dark border">{{ registro.usuario.username|upper }}</span></td>
+                    <td>{% if registro.ativo %}<span class="badge bg-success">CONFORME</span>{% else %}<span class="badge bg-danger">PENDENTE</span>{% endif %}</td>
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center gap-2">
+                            <button type="button" class="btn btn-info btn-sm text-white rounded-circle shadow-sm" data-bs-toggle="modal" data-bs-target="#modalOlho{{ registro.id }}"><i class="fas fa-eye"></i></button>
+                            <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalBI{{ registro.id }}"><i class="fas fa-chart-pie me-1"></i> Analisar</button>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url 'registro_update' registro.id %}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
+                        <a href="{% url 'registro_delete' registro.id %}" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>
+                    </td>
+                </tr>
+
+                <div class="modal fade" id="modalOlho{{ registro.id }}" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered"><div class="modal-content rounded-4 border-0">
+                        <div class="modal-header bg-info text-white rounded-top-4"><h5><i class="fas fa-eye me-2"></i>Visualização Rápida</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                        <div class="modal-body bg-light"><div id="quickView{{ registro.id }}" class="p-3 bg-white rounded border small"></div></div>
+                        <script>
+                            (function(){
+                                let raw = `{{ registro.descricao|safe }}`;
+                                document.getElementById('quickView{{ registro.id }}').innerText = raw.replace(/\[QUEBRA\]/g, '\n').replace(/\|/g, ' ➜ ');
+                            })();
+                        </script>
+                    </div></div>
+                </div>
+
+                <div class="modal fade" id="modalBI{{ registro.id }}" tabindex="-1">
+                    <div class="modal-dialog modal-xl modal-dialog-centered"><div class="modal-content rounded-4 border-0 shadow-lg">
+                        <div class="modal-header bg-dark text-white rounded-top-4 py-3"><h5 class="modal-title fw-bold">BI Report: {{ registro.titulo }}</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                        <div class="modal-body p-4 bg-light">
+                            <div class="row g-4">
+                                <div class="col-lg-6"><div class="card border-0 shadow-sm rounded-4 p-4 h-100"><h6>Performance Financeira</h6><div style="height: 300px;"><canvas id="chart{{ registro.id }}"></canvas></div></div></div>
+                                <div class="col-lg-6"><div class="card border-0 shadow-sm rounded-4 p-4 h-100"><h6>Matriz de Dados</h6><div id="biTable{{ registro.id }}" class="overflow-auto" style="max-height: 300px;"></div></div></div>
+                            </div>
+                        </div>
+                        <script>
+                            (function() {
+                                const raw = `{{ registro.descricao|safe }}`;
+                                const target = document.getElementById('biTable{{ registro.id }}');
+                                let labels = [], values = [];
+                                if (raw.includes('[QUEBRA]')) {
+                                    const linhas = raw.split(' [QUEBRA] ');
+                                    let html = '<table class="table table-sm"><thead><tr><th>Item</th><th>Valor</th></tr></thead><tbody>';
+                                    linhas.forEach(l => {
+                                        const cols = l.split(' | ');
+                                        if(cols.length >= 2) { labels.push(cols[0]); values.push(parseFloat(cols[1].replace(',', '.')) || 0); }
+                                        html += `<tr><td>${cols[0]}</td><td class="fw-bold">R$ ${cols[1]}</td></tr>`;
+                                    });
+                                    html += '</tbody></table>'; target.innerHTML = html;
+                                    new Chart(document.getElementById('chart{{ registro.id }}'), {
+                                        type: 'bar',
+                                        data: { labels: labels, datasets: [{ label: 'Valor R$', data: values, backgroundColor: '#0d6efd', borderRadius: 8 }] },
+                                        options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                                    });
+                                }
+                            })();
+                        </script>
+                    </div></div>
+                </div>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</form>
+
+<div class="modal fade" id="modalImportar" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content rounded-4"><form action="{% url 'importar_planilha' %}" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}<div class="modal-header bg-info text-white"><h5>Importar Dataset</h5></div>
+        <div class="modal-body"><input type="file" name="planilha" class="form-control rounded-pill" required></div>
+        <div class="modal-footer"><button type="submit" class="btn btn-info text-white rounded-pill w-100">Consolidar</button></div>
+    </form></div></div>
+</div>
+
+<script>
+    document.getElementById('selectAll').onclick = function() {
+        var checkboxes = document.getElementsByName('registros_ids');
+        for (var checkbox of checkboxes) { checkbox.checked = this.checked; }
+    }
+</script>
+{% endblock %}
